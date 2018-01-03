@@ -8,27 +8,34 @@ const {ObjectID} = require('mongodb');
 var {mongoose} = require('./db/mongoose');
 var {Todo} = require('./models/todo');
 var {User} = require('./models/user');
+var {authenticate} = require('./middleware/authenticate');
 
 var app = express();
 var port = process.env.PORT;
 
 app.use(bodyParser.json());
 
+//
+// TODOS
+//
+
+// todos post
 app.post('/todos', (req, res) => {
-	var todo = new Todo({
+	var newTodo = new Todo({
 		text: req.body.text
 	});
-	todo.save().then((doc) => {
-		res.send(doc);
-	}, (e) => {
+	newTodo.save().then((todo) => {
+		res.send(todo);
+	}).catch((e) => {
 		res.status(400).send(e);
 	});
 });
 
+// todos get
 app.get('/todos', (req, res) => {
 	Todo.find().then((todos) => {
 		res.send({todos});
-	}, (e) => {
+	}).catch((e) => {
 		res.status(400).send(e);
 	});
 })
@@ -45,12 +52,13 @@ app.get('/todos/:id', (req, res) => {
 			return res.status(404).send();
 		}
 
-		res.status(200).send({todo});
+		res.send({todo});
 	}).catch((e) => {
 		res.status(400).send();
 	});
 });
 
+// todos delete
 app.delete('/todos/:id', (req, res) => {
 	var id = req.params.id;
 
@@ -63,12 +71,13 @@ app.delete('/todos/:id', (req, res) => {
 			return res.status(404).send();
 		}
 
-		res.status(200).send({todo});
+		res.send({todo});
 	}).catch((e) => {
 		res.status(400).send();
 	});
 });
 
+// todos patch
 app.patch('/todos/:id', (req, res) => {
 	var id = req.params.id;
 	var body = _.pick(req.body, ['text', 'completed']);
@@ -89,11 +98,61 @@ app.patch('/todos/:id', (req, res) => {
 			return res.status(404).send();
 		}
 
-		res.status(200).send({todo});
+		res.send({todo});
 	}).catch((e) => {
 		res.status(400).send();
 	});
 });
+
+//
+// USERS
+//
+
+// users post
+app.post('/users', (req, res) => {
+	var body = _.pick(req.body, ['email', 'password']);
+	var user = new User(body);
+
+	user.save().then(() => {
+		return user.generateAuthToken();
+	}).then((token) => {
+		res.header('x-auth', token).send(user);
+	}).catch((e) => {
+		res.status(400).send(e);
+	});
+});
+
+app.get('/users/me', authenticate, (req, res) => {
+	res.send(req.user);
+});
+
+// users get
+// app.get('/users', (req, res) => {
+// 	User.find().then((users) => {
+// 		res.send({users});
+// 	}).catch((e) => {
+// 		res.status(400).send(e);
+// 	});
+// })
+
+// app.get('/users/:id', (req, res) => {
+// 	var id = req.params.id;
+//
+// 	if (!ObjectID.isValid(id)) {
+// 		return res.status(404).send();
+// 	}
+//
+// 	User.findById(id).then((user) => {
+// 		if (!user) {
+// 			return res.status(404).send();
+// 		}
+//
+// 		res.send({user});
+// 	}).catch((e) => {
+// 		res.status(400).send();
+// 	});
+// });
+
 
 app.listen(port, () => {
 	console.log(`Started on port ${port}`);
