@@ -10,7 +10,7 @@ const userOneId = new ObjectID();
 const userTwoId = new ObjectID();
 const users = [{
 	_id: userOneId,
-	email: 'valid@example.com',
+	email: 'one@example.com',
 	password: 'userOnePass',
 	tokens: [{
 		access: 'auth',
@@ -18,7 +18,7 @@ const users = [{
 	}]
 }, {
 	_id: userTwoId,
-	email: 'invalid@example.com',
+	email: 'two@example.com',
 	password: 'userTwoPass'
 }];
 
