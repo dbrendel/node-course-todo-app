@@ -81,6 +81,25 @@ describe('POST /users/me', () => {
 	});
 });
 
+describe('DELETE /users/me/login', () => {
+	it('should logout user by removing token from user in db', (done) => {
+		request(app)
+			.delete('/users/me/token')
+			.set('x-auth', users[0].tokens[0].token)
+			.expect(200)
+			.end((err, res) => {
+				if (err) {
+					return done(err);
+				}
+
+				User.findById(users[0]._id).then((user) => {
+					expect(user.tokens.length).toBe(0);
+					done();
+				}).catch((e) => done(e));
+			});
+	});
+});
+
 describe('POST /users/login', () => {
 	it('should login user and return auth token', (done) => {
 		request(app)
